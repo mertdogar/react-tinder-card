@@ -239,7 +239,7 @@ if (typeof window !== 'undefined') {
           startPositon = { x: 0, y: 0 }
           lastPosition = { dx: 0, dy: 0, vx: 0, vy: 0, timeStamp: Date.now() }
         })
-      })
+      }, [])
 
       const element = React.useRef()
 
