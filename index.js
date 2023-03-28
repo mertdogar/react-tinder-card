@@ -168,11 +168,13 @@ if (typeof window !== 'undefined') {
       }
 
       React.useLayoutEffect(() => {
+
+        console.log('useLayoutEffect')
         let startPositon = { x: 0, y: 0 }
         let lastPosition = { dx: 0, dy: 0, vx: 0, vy: 0, timeStamp: Date.now() }
         let isClicking = false
 
-        element.current.addEventListener(('touchstart'), (ev) => {
+        const elementTouchStart = (ev) => {
           if (!ev.srcElement.className.includes('pressable') && ev.cancelable) {
             ev.preventDefault()
           }
@@ -180,14 +182,16 @@ if (typeof window !== 'undefined') {
           const gestureState = gestureStateFromWebEvent(ev, startPositon, lastPosition, true)
           lastPosition = gestureState
           startPositon = { x: ev.touches[0].clientX, y: ev.touches[0].clientY }
-        })
+        }
+        element.current.addEventListener(('touchstart'), elementTouchStart)
 
-        element.current.addEventListener(('mousedown'), (ev) => {
+        const elementMouseDown = (ev) => {
           isClicking = true
           const gestureState = gestureStateFromWebEvent(ev, startPositon, lastPosition, false)
           lastPosition = gestureState
           startPositon = { x: ev.clientX, y: ev.clientY }
-        })
+        }
+        element.current.addEventListener(('mousedown'), elementMouseDown)
 
         const handleMove = (gestureState) => {
           // Check fulfillment
@@ -213,32 +217,48 @@ if (typeof window !== 'undefined') {
           setSpringTarget.start({ xyrot: [gestureState.dx, gestureState.dy, rot], config: physics.touchResponsive })
         }
 
-        window.addEventListener(('mousemove'), (ev) => {
+        const windowMouseMove = (ev) => {
           if (!isClicking) return
           const gestureState = gestureStateFromWebEvent(ev, startPositon, lastPosition, false)
           lastPosition = gestureState
           handleMove(gestureState)
-        })
+        }
+        window.addEventListener(('mousemove'), windowMouseMove)
 
-        window.addEventListener(('mouseup'), (ev) => {
+        const windowMouseUp = (ev) => {
           if (!isClicking) return
           isClicking = false
           handleSwipeReleased(setSpringTarget, lastPosition)
           startPositon = { x: 0, y: 0 }
           lastPosition = { dx: 0, dy: 0, vx: 0, vy: 0, timeStamp: Date.now() }
-        })
+        }
+        window.addEventListener(('mouseup'), windowMouseUp)
 
-        element.current.addEventListener(('touchmove'), (ev) => {
+        const elementTouchMove = (ev) => {
           const gestureState = gestureStateFromWebEvent(ev, startPositon, lastPosition, true)
           lastPosition = gestureState
           handleMove(gestureState)
-        })
+        }
+        element.current.addEventListener(('touchmove'), elementTouchMove)
 
-        element.current.addEventListener(('touchend'), (ev) => {
+        const elementTouchEnd = (ev) => {
           handleSwipeReleased(setSpringTarget, lastPosition)
           startPositon = { x: 0, y: 0 }
           lastPosition = { dx: 0, dy: 0, vx: 0, vy: 0, timeStamp: Date.now() }
-        })
+        }
+        element.current.addEventListener(('touchend'), elementTouchEnd)
+
+        return () => {
+          console.log('removing listeners')
+          element.current.removeEventListener(('touchstart'), elementTouchStart)
+          element.current.removeEventListener(('mousedown'), elementMouseDown)
+
+          window.removeEventListener(('mousemove'), windowMouseMove)
+          window.removeEventListener(('mouseup'), windowMouseUp)
+
+          element.current.removeEventListener(('touchstart'), elementTouchMove)
+          element.current.removeEventListener(('touchend'), elementTouchEnd)
+        }
       }, [])
 
       const element = React.useRef()
